@@ -60,37 +60,45 @@ router.route('/pattern')
 		if (req.body.relatedPatternIds === undefined)
 			req.body.relatedPatternIds = [];
 
-		//relatedPatternIds are only added when the related patterns do exist in the database
         savePattern.relatedPatternIds = [];
 
-		//synchronize fetching after relatedpattern and save the pattern
-
-		// loop to query for all related Pattern
-		// has to be synchronized because there is a callback inside the loop
-		let index = 0;
-		async.whilst(
-			function testCondition(){return index < req.body.relatedPatternIds.length;},
-			function increaseCounter(loopCallback){
-
-				//execute mongoose query
-				Pattern.findByIdAndUpdate(req.body.relatedPatternIds[index], {$push: {relatedPatternIds: savePattern._id}}, (err, updateObject) => {
-					if (!err){
-						savePattern.relatedPatternIds.push(req.body.relatedPatternIds[index]);
+		// execute the tasks synchronously:
+		// * 
+		async.series([
+			// add relatedPatternIds to the savedPattern if they exist and also add the savePattern to the relatedPatterns
+			function(callback){
+				let index = 0;
+				async.whilst(
+					function testCondition(){return index < req.body.relatedPatternIds.length;},
+					function iteration(callback){
+						//execute queries synchronously
+						Pattern.findByIdAndUpdate(req.body.relatedPatternIds[index], {$push: {relatedPatternIds: savePattern._id}}, (err, updateObject) => {
+							if (!err){
+								savePattern.relatedPatternIds.push(req.body.relatedPatternIds[index]);
+							}
+							//increment and call the next iteration of the loop via callback
+							index++;
+							callback();
+						});
+					},
+					// callback function from async.whilst is called when the testCondition fails
+					function (){
+						// callback from async.series is called to start the next function of async.series
+						callback();
 					}
-
-					//increment and call the next iteration of the loop via callback
-					index++;
-					loopCallback();
-				});
+				);
 			},
-			function (){
+			// save savePattern to database
+			function(callback){
 				savePattern.save((err, savedObject) => {
-				if (err)
-					res.send(err);
-				else
-					res.json(savedObject);
-			});}
-		);
+					if (err)
+						res.send(err);
+					else
+						res.json(savedObject);
+				});
+				callback();
+			}
+		]);
         // patternIds are igored cause they are managed by another function
     });
 
