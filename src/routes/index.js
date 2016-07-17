@@ -4,8 +4,9 @@ import Pattern from '../model/pattern'
 import express from 'express'
 import mongoose from 'mongoose'
 import Mapping from '../model/mapping';
-import 'babel-polyfill'
-import async from 'async'
+import 'babel-polyfill';
+import async from 'async';
+import bluebird from 'bluebird';
 
 
 let router = express.Router();
@@ -165,8 +166,13 @@ router.route('/tactic/:tactic_id')
 
     });
 
-router.get('/mappingsByPatternId/:id',(req,res)=>{
-   //TODO List of all mapped Tactics to given Pattern by ID
+
+
+router.get('/mappingsByPatternId/:id',checkExistingPattern, (req, res)=> {
+	//TODO List of all mapped Tactics to given Pattern by ID
+	var patternDoc = findPatternById(req.body.patternId);
+	res.json(patternDoc);
+	//TODO Finish this sh*t.
 });
 
 router.get('/mappingsByTacticId/:id',(req,res)=>{
@@ -177,16 +183,43 @@ router.get('/relatedPatternFromId/:id',(req,res)=>{
     //TODO Get all related Patterns from given Pattern by ID
 });
 
+router.get('/mapping',(req,res)=>{
+	Mapping.find((err,queryResult)=>{
+		if (err)
+			res.send(err);
+		else
+			res.json(queryResult);
+	})
+})
 
-router.post('/mapping',checkExistingPattern, checkExistingTactic, (req,res)=>{
-    let saveMapping = new Mapping();
-    let patternId = req.body.patternId;
-    let tacticId = req.body.tacticId;
-    saveMapping.patternId = patternId;
-    saveMapping.tacticId = tacticId;
-    //TODO Update Pattern und Tactic Info and save Mapping
+router.post('/mapping', checkExistingPattern, checkExistingTactic,function (req, res) {
+	mongoose.Promise = bluebird;
+	let saveMapping = new Mapping();
+	let patternId = req.body.patternId;
+	let tacticId = req.body.tacticId;
+	let info = req.body.info;
+	saveMapping.patternId = patternId;
+	saveMapping.tacticId = tacticId;
+	saveMapping.info = info;
+	let mappingId = saveMapping._id;
 
-
+	var promise = [];
+	promise.push(Tactic.findByIdAndUpdate(tacticId,{$addToSet: {mappingIds: mappingId}}).exec());
+	promise.push(Pattern.findByIdAndUpdate(tacticId,{$addToSet: {mappingIds: mappingId}}).exec());
+	bluebird.all(promise)
+		.then(function() {
+			saveMapping.save((err, result)=> {
+				if (err) {
+					res.statusCode = 500;
+					res.setStatusMessage = err;
+				} else res.json(result)
+			})
+			console.log("saved");
+		})
+		.catch(function(err){
+			console.log("error" + err);
+			res.send(err);
+		})
 });
 
 
@@ -218,6 +251,16 @@ function checkExistingPattern (req,res,next) {
             next();
         }
     });
+}
+
+//TODO Not done yet, Change checkExisting first.
+function findPatternById(id) {
+	let promise = Pattern.findById(id).exec();
+	promise.then(function(pattern){
+		return pattern;
+	}).catch(function(err){
+		console.log("Error findPatternById" + err);
+	})
 }
 
 export default router
