@@ -5,7 +5,8 @@ import mongoose from 'mongoose';
 
 const mappingSchema = new mongoose.Schema({
     patternId: String,
-    tacticId: String
+    tacticId: String,
+	info: String
 });
 
 export default mongoose.model('Mapping', mappingSchema);

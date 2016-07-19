@@ -6,7 +6,7 @@ import mongoose from 'mongoose'
 import Mapping from '../model/mapping';
 import 'babel-polyfill';
 import async from 'async';
-import bluebird from 'bluebird';
+import Bluebird from 'bluebird';
 
 
 let router = express.Router();
@@ -176,19 +176,57 @@ router.route('/tactic/:tactic_id')
 
 
 
-router.get('/mappingsByPatternId/:id',checkExistingPattern, (req, res)=> {
-	//TODO List of all mapped Tactics to given Pattern by ID
-	var patternDoc = findPatternById(req.body.patternId);
-	res.json(patternDoc);
-	//TODO Finish this sh*t.
+router.get('/mappingsByPatternId/:pattern_id',checkExistingPattern, (req, res)=> {
+	let patternQuery = findPatternByIdQuery(req.params.pattern_id);
+	patternQuery.exec(function (err,result){
+		if(err) res.send(err)
+		else{
+			let IdArray = result.mappingIds;
+			Mapping.find({
+				_id : { $in : IdArray}
+			}, function (err, docs){
+				if (err) res.send(err)
+				else res.json(docs)
+			});
+		}
+	});
 });
 
-router.get('/mappingsByTacticId/:id',(req,res)=>{
-   //TODO List of all mapped Patterns to given Tactic by ID
+
+router.get('/mappingsByTacticId/:tactic_id',(req,res)=>{
+   let tacticQuery = findTacticbyIdQuery(req.params.tactic_id);
+	tacticQuery.exec(function(err,result){
+		if(err) res.status(500).send(err)
+		else{
+			let IdArray = result.mappingIds;
+			Mapping.find({
+				_id : { $in : IdArray}
+			},function (err, docs){
+				if (err) res.status(500).send(err)
+				else res.json(docs)
+			});
+		}
+	});
 });
 
-router.get('/relatedPatternFromId/:id',(req,res)=>{
-    //TODO Get all related Patterns from given Pattern by ID
+router.get('/relatedPatternFromId/:pattern_id',(req,res)=>{
+	let patternQuery = findPatternByIdQuery(req.params.pattern_id);
+	patternQuery.exec(function(err,result){
+		if (err) res.status(500).send(err)
+		else{
+			let IdArray = result.relatedPatternIds;
+			Pattern.find({
+				_id : { $in : Idarray}
+			},function(err, docs){
+				if(err) res.status(500).send(err)
+				else res.json(docs)
+			});
+		}
+	});
+});
+
+router.get('/childTaticsFromId/:tactic_id',(req,res)=>{
+	//TODO Get all children Tactics from given Tactic ID
 });
 
 router.get('/mapping',(req,res)=>{
@@ -200,21 +238,21 @@ router.get('/mapping',(req,res)=>{
 	})
 })
 
-router.post('/mapping', checkExistingPattern, checkExistingTactic,function (req, res) {
-	mongoose.Promise = bluebird;
+router.post('/mapping', checkExistingPattern, checkExistingTactic, function (req, res) {
+	mongoose.Promise = Bluebird;
 	let saveMapping = new Mapping();
-	let patternId = req.body.patternId;
-	let tacticId = req.body.tacticId;
+	let patternId = req.body.pattern_id;
+	let tacticId = req.body.tactic_id;
 	let info = req.body.info;
 	saveMapping.patternId = patternId;
 	saveMapping.tacticId = tacticId;
 	saveMapping.info = info;
 	let mappingId = saveMapping._id;
-
+	console.log(saveMapping);
 	var promise = [];
 	promise.push(Tactic.findByIdAndUpdate(tacticId,{$addToSet: {mappingIds: mappingId}}).exec());
-	promise.push(Pattern.findByIdAndUpdate(tacticId,{$addToSet: {mappingIds: mappingId}}).exec());
-	bluebird.all(promise)
+	promise.push(Pattern.findByIdAndUpdate(patternId,{$addToSet: {mappingIds: mappingId}}).exec());
+	Bluebird.all(promise)
 		.then(function() {
 			saveMapping.save((err, result)=> {
 				if (err) {
@@ -233,11 +271,11 @@ router.post('/mapping', checkExistingPattern, checkExistingTactic,function (req,
 
 
 function checkExistingTactic (req,res,next){
-    let tacticId = req.body.tacticId;
+    let tacticId = req.body.tactic_id;
+	if (tacticId === undefined) tacticId = req.params.tactic_id;
     Tactic.count({_id: tacticId}, (err,count)=>{
         if(err){
-            res.statusCode()
-            res.send(err);
+            res.status(500).send(err);
         }else
         if(count <= 0){
             res.json({error:"Error, Tactic not found"});
@@ -248,10 +286,11 @@ function checkExistingTactic (req,res,next){
 }
 
 function checkExistingPattern (req,res,next) {
-    let patternId = req.body.patternId;
+    let patternId = req.body.pattern_id;
+	if (patternId === undefined) patternId = req.params.pattern_id;
     Pattern.count({_id: patternId}, (err,count)=>{
         if(err){
-            res.send(err);
+        	res.status(404).send(err);
         }else
         if(count <= 0){
             res.json({error:"Error, Pattern not found"});
@@ -261,14 +300,20 @@ function checkExistingPattern (req,res,next) {
     });
 }
 
-//TODO Not done yet, Change checkExisting first.
-function findPatternById(id) {
-	let promise = Pattern.findById(id).exec();
-	promise.then(function(pattern){
-		return pattern;
-	}).catch(function(err){
-		console.log("Error findPatternById" + err);
-	})
+/*
+	Block of Functions which return a query to find Pattern, Tactic, Mapping by ID.
+ */
+function findPatternByIdQuery(id) {
+	return Pattern.findById(id);
 }
+
+function findTacticByIdQuery(id){
+	return Tactic.findById(id);
+}
+
+function findMAppingByIdQuery(id){
+	return Mapping.findById(id);
+}
+
 
 export default router
