@@ -268,6 +268,28 @@ router.post('/mapping', checkExistingPattern, checkExistingTactic, function (req
 		})
 });
 
+router.delete('/mapping/:mapping_id', checkExistingMapping, (req,res)=>{
+		mongoose.Promise = Bluebird;
+		let mappingId = req.params.mapping_id;
+		let mappingIdForPull = mongoose.Types.ObjectId(mappingId);
+		let mappingPromise = findMappingByIdQuery(mappingId).exec();
+		mappingPromise.then((doc)=> {
+			var promise = [];
+			promise.push(Tactic.findByIdAndUpdate(doc.tacticId, {$pull: {mappingIds: mappingIdForPull}}).exec());
+			promise.push(Pattern.findByIdAndUpdate(doc.patternId, {$pull: {mappingIds: mappingIdForPull}}).exec());
+			Bluebird.all(promise).then(function () {
+				let deleteQuery = findMappingByIdQuery(mappingId).remove((err)=> {
+					if (err) res.status(500).send(err)
+					else res.status(200).send();
+				})
+			}).catch(e=> {
+				res.status(500).send(e);
+			});
+		}).catch(e=> {
+			res.status(500).send(e);
+		})
+});
+
 
 
 function checkExistingTactic (req,res,next){
@@ -290,7 +312,7 @@ function checkExistingPattern (req,res,next) {
 	if (patternId === undefined) patternId = req.params.pattern_id;
     Pattern.count({_id: patternId}, (err,count)=>{
         if(err){
-        	res.status(404).send(err);
+        	res.status(500).send(err);
         }else
         if(count <= 0){
             res.json({error:"Error, Pattern not found"});
@@ -298,6 +320,19 @@ function checkExistingPattern (req,res,next) {
             next();
         }
     });
+}
+
+function checkExistingMapping(req,res,next){
+	let mappingId = req.body.mapping_id;
+	if(mappingId === undefined) mappingId = req.params.mapping_id;
+	Mapping.count({_id: mappingId}, (err,count)=>{
+		if(err){res.status(500).send(err)}
+		else if (count <= 0){
+			res.status(404).json({error: "Error, Mapping not found"})
+		}else{
+			next();
+		}
+	});
 }
 
 /*
@@ -311,7 +346,7 @@ function findTacticByIdQuery(id){
 	return Tactic.findById(id);
 }
 
-function findMAppingByIdQuery(id){
+function findMappingByIdQuery(id){
 	return Mapping.findById(id);
 }
 
