@@ -252,14 +252,14 @@ router.get('/mappingsByTacticId/:tactic_id',(req,res)=>{
 	});
 });
 
-router.get('/relatedPatternFromId/:pattern_id',(req,res)=>{
+router.get('/relatedPatternFromId/:pattern_id',checkExistingPattern,(req,res)=>{
 	let patternQuery = findPatternByIdQuery(req.params.pattern_id);
 	patternQuery.exec(function(err,result){
 		if (err) res.status(500).send(err)
 		else{
 			let IdArray = result.relatedPatternIds;
 			Pattern.find({
-				_id : { $in : Idarray}
+				_id : { $in : IdArray}
 			},function(err, docs){
 				if(err) res.status(500).send(err)
 				else res.json(docs)
@@ -268,8 +268,21 @@ router.get('/relatedPatternFromId/:pattern_id',(req,res)=>{
 	});
 });
 
-router.get('/childTaticsFromId/:tactic_id',(req,res)=>{
+router.get('/childTaticsFromId/:tactic_id',checkExistingTactic,(req,res)=>{
 	//TODO Get all children Tactics from given Tactic ID
+	let tacticQuery = findTacticByIdQuery(req.params.tactic_id);
+	tacticQuery.exec(function(err,result){
+		if(err) res.status(500).send(err)
+		else{
+			let IdArray = result.childTacticIds;
+			Tactic.find({
+				_id : { $in : IdArray}
+			},function(err, docs){
+				if(err) res.status(500).send(err)
+				else res.json(docs)
+			});
+		}
+	});
 });
 
 router.get('/mapping', (req, res)=> {
@@ -287,6 +300,7 @@ router.post('/mapping', checkExistingPattern, checkExistingTactic, function (req
 	let patternId = req.body.pattern_id;
 	let tacticId = req.body.tactic_id;
 	let info = req.body.info;
+	//TODO Add Rating/Comments
 	saveMapping.patternId = patternId;
 	saveMapping.tacticId = tacticId;
 	saveMapping.info = info;
