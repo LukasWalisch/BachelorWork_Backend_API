@@ -7,6 +7,7 @@ const tacticsSchema = new mongoose.Schema({
     name: String,
     info: String,
     mappingIds: Array,
+	parentTacticId: String,
     childTacticIds: Array
 });
 
