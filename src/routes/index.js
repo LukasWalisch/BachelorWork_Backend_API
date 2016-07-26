@@ -137,6 +137,45 @@ router.route('/pattern/:pattern_id')
 		});
 	})
 
+	.delete(checkExistingPattern,(req,res)=>{
+		mongoose.Promise = Bluebird;
+		//This is the ID of the Pattern that needs to be deleted in die related Patterns
+		var patternObjectId = mongoose.Types.ObjectId(req.params.pattern_id);
+		let promise = findPatternByIdQuery(req.params.pattern_id).exec();
+		promise.then(function(doc){
+			//Gather all IDs from the Patterns which threw an error und try again later.
+			var gatherErrorIDs = [];
+			let relatedPatternArray = doc.relatedPatternIds;
+			let promiseRelatedPatternArray = relatedPatternArray.map((item) =>{
+				return new Promise((resolve)=>{
+					//Update the relatedID field, add it to gatherErrorIDs if something happends
+					console.log("Item: " + item + " patternObjectId: " + patternObjectId);
+					patternObjectId = mongoose.Types.ObjectId(patternObjectId);
+					Pattern.findByIdAndUpdate(item, {$pull: {relatedPatternIds: patternObjectId}},(err,result)=>{
+						if (err) {
+							gatherErrorIDs.push(item);
+							console.log(err);
+							resolve();
+						}
+						console.log(result);
+						resolve();
+					});
+				});
+			});
+			//Loop through the complete array and wait for all Querys to be finished.
+			Bluebird.all(promiseRelatedPatternArray)
+				.then(function(){
+					console.log("Gathered Errors: " + gatherErrorIDs);
+					while(false){
+						//TODO Retry the querys if errors happend, look up how its done best practice.
+					}
+					res.json({"ok":"ok"});
+				});
+			//TODO Delete Mappings here.
+			//TODO Delete Pattern itself.
+		});
+	})
+
 	.put((req, res)=> {
 
 		// find the object with the request id
@@ -326,6 +365,19 @@ router.post('/mapping', checkExistingPattern, checkExistingTactic, function (req
 });
 
 router.delete('/mapping/:mapping_id', checkExistingMapping, (req,res)=>{
+
+
+	let promise = deleteMapping(req);
+	promise
+		//If the resolve is set, then is triggered
+		.then((resolve)=>{
+			res.status(resolve).send();
+		})
+		// If the reject is set, catch is triggered
+		.catch((reject)=>{
+			res.status(500).send(reject);
+		})
+	/*
 		mongoose.Promise = Bluebird;
 		let mappingId = req.params.mapping_id;
 		let mappingIdForPull = mongoose.Types.ObjectId(mappingId);
@@ -344,11 +396,11 @@ router.delete('/mapping/:mapping_id', checkExistingMapping, (req,res)=>{
 			});
 		}).catch(e=> {
 			res.status(500).send(e);
-		})
+		})*/
 });
 
 
-
+//Helper Function Section:
 function checkExistingTactic (req,res,next){
     let tacticId = req.body.tactic_id;
 	if (tacticId === undefined) tacticId = req.params.tactic_id;
@@ -389,6 +441,31 @@ function checkExistingMapping(req,res,next){
 		}else{
 			next();
 		}
+	});
+}
+
+function deleteMapping(req){
+	return new Bluebird(function(resolve,reject) {
+		mongoose.Promise = Bluebird;
+		let mappingId = req.params.mapping_id;
+		//Cast the String to an ObjectId so the ID is found in the mappingIds field.
+		let mappingIdForPull = mongoose.Types.ObjectId(mappingId);
+		let mappingPromise = findMappingByIdQuery(mappingId).exec();
+		mappingPromise.then((doc)=> {
+			var promise = [];
+			promise.push(Tactic.findByIdAndUpdate(doc.tacticId, {$pull: {mappingIds: mappingIdForPull}}).exec());
+			promise.push(Pattern.findByIdAndUpdate(doc.patternId, {$pull: {mappingIds: mappingIdForPull}}).exec());
+			Bluebird.all(promise).then(function () {
+				let deleteQuery = findMappingByIdQuery(mappingId).remove((err)=> {
+					if (err) reject(err);
+					else resolve(200);
+				})
+			}).catch(e=> {
+				reject(e);
+			});
+		}).catch(e=> {
+			return reject(e);
+		});
 	});
 }
 
