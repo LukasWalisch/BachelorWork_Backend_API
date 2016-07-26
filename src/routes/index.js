@@ -97,7 +97,7 @@ router.route('/pattern')
 						Pattern.findByIdAndUpdate(req.body.relatedPatternIds[index], {$push: {relatedPatternIds: savePattern._id}}, (err, updateObject) => {
 							// if the relatedPatternId from the request is found in the db,
 							// it is added to savePattern
-							if (!err) {
+							if (!err && updateObject !== null) {
 
 								//format relatedPatternId from post request as Object id
 								const relatedPatternObjectId = mongoose.Types.ObjectId(req.body.relatedPatternIds[index]);
@@ -220,7 +220,7 @@ router.route('/pattern/:pattern_id')
 							req.body.relatedPatternIds[index],
 							{$push: {relatedPatternIds: updatePattern._id}},
 							(err, updateObject) => {
-								if (!err){
+								if (!err && updateObject !== null){
 									const relatedPatternObjectId = mongoose.Types.ObjectId(req.body.relatedPatternIds[index]);
 									updatePattern.push(relatedPatternObjectId);
 								}
