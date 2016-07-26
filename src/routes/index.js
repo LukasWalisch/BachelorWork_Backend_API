@@ -32,7 +32,7 @@ router.route('/tactic')
 
 		//if the new tactic is no root tactic
 		//new tactic is added as child tactic to the parent tactic
-		if (req.body.parentTacticId !== undefined){
+		if (req.body.parentTacticId !== undefined) {
 			saveTactic.parentTacticId = req.body.parentTacticId;
 			Tactic.findByIdAndUpdate(saveTactic.parentTacticId, {$push: {childTacticIds: saveTactic._id}});
 		}
@@ -42,9 +42,9 @@ router.route('/tactic')
 
 		//in case the new tactic is no root tactic and there is an array of child tactics,
 		// the array of child tactics is removed from parents child tactics,
-		if (req.body.childTacticIds !== undefined){
+		if (req.body.childTacticIds !== undefined) {
 			saveTactic.childTacticIds = req.body.childTacticIds;
-			if (saveTactic.parentTacticId !== ""){
+			if (saveTactic.parentTacticId !== "") {
 				Tactic.findByIdAndUpdate(saveTactic.parentTacticId, {$pullAll: {childTacticIds: saveTactic.childTacticIds}});
 			}
 		}
@@ -84,7 +84,6 @@ router.route('/pattern')
 		savePattern.relatedPatternIds = [];
 
 		// execute the tasks synchronously:
-		// * 
 		async.series([
 			// add relatedPatternIds to the savedPattern if they exist and also add the savePattern to the relatedPatterns
 			function (callback) {
@@ -96,8 +95,15 @@ router.route('/pattern')
 					function iteration(callback) {
 						//execute queries synchronously
 						Pattern.findByIdAndUpdate(req.body.relatedPatternIds[index], {$push: {relatedPatternIds: savePattern._id}}, (err, updateObject) => {
+							// if the relatedPatternId from the request is found in the db,
+							// it is added to savePattern
 							if (!err) {
-								savePattern.relatedPatternIds.push(req.body.relatedPatternIds[index]);
+
+								//format relatedPatternId from post request as Object id
+								const relatedPatternObjectId = mongoose.Types.ObjectId(req.body.relatedPatternIds[index]);
+
+								// save the relatedPatternId to savePattern
+								savePattern.relatedPatternIds.push(relatedPatternObjectId);
 							}
 							//increment and call the next iteration of the loop via callback
 							index++;
@@ -201,23 +207,30 @@ router.route('/pattern/:pattern_id')
 			updatePattern.relatedPatternIds = [];
 
 		//synchronous series: update relatedPatternIds and save updatedPattern
+		//similar to post method of /patterns
 		async.series([
 			function updateRelatedPatternIds(callback) {
 				let index = 0;
 				async.whilst(
-					function testCondition () {return index <= req.body.relatedPatternIds.length;},
-					function iteration (callback) {
+					function testCondition() {
+						return index <= req.body.relatedPatternIds.length;
+					},
+					function iteration(callback) {
 						Pattern.findByIdAndUpdate(
 							req.body.relatedPatternIds[index],
 							{$push: {relatedPatternIds: updatePattern._id}},
 							(err, updateObject) => {
-								if (!err)
-									updatePattern.push(req.body.relatedPatternIds[index]);
+								if (!err){
+									const relatedPatternObjectId = mongoose.Types.ObjectId(req.body.relatedPatternIds[index]);
+									updatePattern.push(relatedPatternObjectId);
+								}
 								index++;
 								callback();
 							});
 					},
-					function (){callback();}
+					function () {
+						callback();
+					}
 				)
 			},
 			function saveUpdatedPattern(callback) {
