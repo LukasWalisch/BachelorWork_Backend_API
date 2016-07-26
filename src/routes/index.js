@@ -70,7 +70,6 @@ router.route('/pattern')
 			else
 				res.json(queryResult);
 		});
-
 	})
 
 	.post((req, res) => {
@@ -153,9 +152,8 @@ router.route('/pattern/:pattern_id')
 			var gatherErrorIDs = [];
 			let relatedPatternArray = doc.relatedPatternIds;
 			let promiseRelatedPatternArray = relatedPatternArray.map((item) =>{
-				return new Promise((resolve)=>{
+				return new Bluebird((resolve)=>{
 					//Update the relatedID field, add it to gatherErrorIDs if something happends
-					console.log("Item: " + item + " patternObjectId: " + patternObjectId);
 					patternObjectId = mongoose.Types.ObjectId(patternObjectId);
 					Pattern.findByIdAndUpdate(item, {$pull: {relatedPatternIds: patternObjectId}},(err,result)=>{
 						if (err) {
@@ -175,10 +173,23 @@ router.route('/pattern/:pattern_id')
 					while(false){
 						//TODO Retry the querys if errors happend, look up how its done best practice.
 					}
-					res.json({"ok":"ok"});
 				});
-			//TODO Delete Mappings here.
+			//Delete all Mappings related to this Pattern.
+			let mappingIdArray = doc.mappingIds;
+			let mappingIdArrayPromise = mappingIdArray.map((item)=>{
+				return deleteMapping(item.toString());
+			});
+			Bluebird.all(mappingIdArrayPromise).catch((reject)=>{
+				console.log("Error deleting Mappings: " + reject);
+			})
+
 			//TODO Delete Pattern itself.
+		}).then(()=>{
+			console.log("Delete this shit");
+			Pattern.findById(patternObjectId.toString()).remove((err)=>{
+				if(err) res.send(err);
+				else res.json({"ok":"ok"});
+			});
 		});
 	})
 
@@ -380,7 +391,7 @@ router.post('/mapping', checkExistingPattern, checkExistingTactic, function (req
 router.delete('/mapping/:mapping_id', checkExistingMapping, (req,res)=>{
 
 
-	let promise = deleteMapping(req);
+	let promise = deleteMapping(req.params.mapping_id);
 	promise
 		//If the resolve is set, then is triggered
 		.then((resolve)=>{
@@ -456,11 +467,15 @@ function checkExistingMapping(req,res,next){
 		}
 	});
 }
-
-function deleteMapping(req){
+/*
+	Deletes a Mapping with given id.
+	id needs to be a String.
+	If you call the function with an ObjectId, convert it first with .toString()
+ */
+function deleteMapping(id){
 	return new Bluebird(function(resolve,reject) {
 		mongoose.Promise = Bluebird;
-		let mappingId = req.params.mapping_id;
+		let mappingId = id;
 		//Cast the String to an ObjectId so the ID is found in the mappingIds field.
 		let mappingIdForPull = mongoose.Types.ObjectId(mappingId);
 		let mappingPromise = findMappingByIdQuery(mappingId).exec();
