@@ -7,7 +7,7 @@ import Mapping from '../model/mapping';
 import 'babel-polyfill';
 import async from 'async';
 import Bluebird from 'bluebird';
-import converter from '../middleware/JSONConverter';
+import JSONConverter from '../middleware/JSONConverter';
 
 let router = express.Router();
 
@@ -82,6 +82,15 @@ router.get("/patterns",(req,res)=>{
 	});
 });
 
+
+
+
+
+
+
+
+
+
 //GET Method to retrieve a single Pattern by Id.
 router.get("/patterns/:pattern_id",(req,res)=>{
 	Pattern.findById(req.params.pattern_id, (err, queryResult) => {
@@ -138,7 +147,37 @@ router.get("/mappings/:mapping_id",(req,res)=>{
 
 router.get("/mappings/:pattern_id",(req,res)=>{
 
-})
+});
+
+//GET method for queries. delegates the request to a function depending on the query params
+router.get("/mapping", (req, res) => {
+	const queryParams = req.query;
+
+	//Query: getMappingsByPatternId
+	if ('patternId' in queryParams) {
+		getMappingsByPatternId(queryParams, req, res);
+	}
+
+	// if query params dont match, send back an error msg
+	else {
+		res.json({err: "query is not available"});
+}
+
+});
+
+//query functions
+
+function getMappingsByPatternId (queryParams, req, res) {
+	//query for mappings with patternId
+	Mapping.find({patternId: queryParams.patternId}, (err, result) => {
+		if (err){
+			res.send(err);
+		}
+		else {
+			res.send(JSONConverter.convertJSONArray('mapping',result));
+		}
+	});
+}
 
 
 
