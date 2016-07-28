@@ -134,7 +134,7 @@ router.get("/mappings/:mapping_id",(req,res)=>{
 	});
 });
 
-router.get("/mappingsByPatternId/:pattern_id",(req,res)=>{
+router.get("/mappings/:pattern_id",(req,res)=>{
 
 })
 
