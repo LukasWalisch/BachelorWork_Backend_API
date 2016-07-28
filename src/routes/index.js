@@ -15,7 +15,6 @@ let router = express.Router();
 mongoose.connect('mongodb://localhost:27017');
 
 router.route('/tactic')
-
 	.get((req, res) => {
 		Tactic.find((err, queryResult) => {
 			if (err)
@@ -24,7 +23,6 @@ router.route('/tactic')
 				res.json(queryResult);
 		});
 	})
-
 	.post((req, res) => {
 		let saveTactic = new Tactic();
 		saveTactic.name = req.body.name;
