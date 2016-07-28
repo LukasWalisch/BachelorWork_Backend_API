@@ -1,25 +1,33 @@
+/*
+Use this functions to convert a Javascript Object to a JSONAPI conform format.
+Convert a single Object with the convertJSONObject.
+Convert an array Object with the convertJSONArry.
+Method returns an error if fields are not set correctly
+ */
 "use strict";
 const JSONConverter = {
-	convertJSONObject: function(type, argument){
-		return JSON.stringify({
+	convertJSONObject: function(type, attribute){
+		if(type == undefined || attribute == undefined) return {error: "type or attribute of Converter not set"};
+		return {
 			data: {
 				type: type,
-				id: argument._id,
-				arguments: argument
+				id: attribute._id,
+				attributes: attribute
 			}
-		})
+		}
 	},
-	convertJSONArray: function(type,argument){
-		let finishedArray = [];
-		argument.forEach((item)=>{
-			let jsonEntry = {
+	convertJSONArray: function(type,attribute){
+		if(type == undefined || attribute == undefined) return {error: "type or attribute of Converter not set"};
+		let dataArray = [];
+		attribute.forEach((item)=>{
+			let dataArrayEntry = {
 				type : type,
 				id : item._id,
-				arguments : item
+				attributes : item
 			}
-			finishedArray.push(jsonEntry);
+			dataArray.push(dataArrayEntry);
 		});
-		return JSON.stringify({data : finishedArray});
+		return {data : dataArray};
 	}
 }
 
