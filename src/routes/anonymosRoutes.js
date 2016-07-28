@@ -7,6 +7,7 @@ import Mapping from '../model/mapping';
 import 'babel-polyfill';
 import async from 'async';
 import Bluebird from 'bluebird';
+import converter from '../middleware/JSONConverter';
 
 let router = express.Router();
 
@@ -76,6 +77,7 @@ router.get("/patterns",(req,res)=>{
 		if (err)
 			res.send(err);
 		else
+			//console.log({}.toString.call(queryResult).split(' ')[1].slice(0, -1).toLowerCase());
 			res.json(queryResult);
 	});
 });

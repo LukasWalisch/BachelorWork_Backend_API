@@ -33,7 +33,7 @@ expressVar.use(bodyParser.urlencoded({extended: true}));
 expressVar.use(cookieParser());
 expressVar.use(express.static('../public'));
 
-//expressVar.use('/user', registred); //Switch the name of the path if needed
+expressVar.use('/user', index); //Switch the name of the path if needed
 expressVar.use('/',anonym);
 
 expressVar.use(function(req,res,next){
