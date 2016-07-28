@@ -128,7 +128,7 @@ router.get("/mappings", (req, res) => {
 			if (err)
 				res.send(err);
 			else
-				res.json(queryResult);
+				res.json(JSONConverter.convertJSONArray('mappings', queryResult));
 		});
 	}
 
@@ -153,7 +153,7 @@ function getMappingsByPatternId (queryParams, req, res) {
 			res.send(err);
 		}
 		else {
-			res.json(JSONConverter.convertJSONArray('mapping',result));
+			res.json(JSONConverter.convertJSONArray('mappings',result));
 		}
 	});
 }
