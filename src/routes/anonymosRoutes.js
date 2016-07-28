@@ -127,34 +127,22 @@ router.get("/tactics/:tactic_id",(req,res)=>{
 //The Following Methods are alle GET Methods that returns an array of mappings or a single mapping
 //If an id is needed, its always <name>_id in params/body.
 
-router.get("/mappings",(req,res)=>{
-	Mapping.find((err, queryResult)=> {
-		if (err)
-			res.send(err);
-		else
-			res.json(queryResult);
-	});
-});
-
-router.get("/mappings/:mapping_id",(req,res)=>{
-	Mapping.findById(req.params.mapping_id, (err, queryResult) => {
-		if (err)
-			res.send(err);
-		else
-			res.json(queryResult);
-	});
-});
-
-router.get("/mappings/:pattern_id",(req,res)=>{
-
-});
-
 //GET method for queries. delegates the request to a function depending on the query params
-router.get("/mapping", (req, res) => {
+router.get("/mappings", (req, res) => {
 	const queryParams = req.query;
 
+	//if it is a request without query, this method returns all entries of mappings
+	if (Object.keys(queryParams).length === 0){
+		Mapping.find((err, queryResult)=> {
+			if (err)
+				res.send(err);
+			else
+				res.json(queryResult);
+		});
+	}
+
 	//Query: getMappingsByPatternId
-	if ('patternId' in queryParams) {
+	else if ('patternId' in queryParams) {
 		getMappingsByPatternId(queryParams, req, res);
 	}
 
@@ -174,7 +162,7 @@ function getMappingsByPatternId (queryParams, req, res) {
 			res.send(err);
 		}
 		else {
-			res.send(JSONConverter.convertJSONArray('mapping',result));
+			res.json(JSONConverter.convertJSONArray('mapping',result));
 		}
 	});
 }
