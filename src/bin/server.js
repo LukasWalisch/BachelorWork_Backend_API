@@ -4,7 +4,7 @@ import logger from 'morgan';
 
 app.use(logger('dev'));
 
-app.all('/api/*',[require('../middleware/validateRequest')]);
+
 
 app.server = http.createServer(app);
 

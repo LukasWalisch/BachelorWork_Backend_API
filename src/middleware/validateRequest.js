@@ -1,3 +1,7 @@
-module.exports = function(req,res,next){
-	console.log("got in");
+
+export default{
+	function(req,res,next){
+		console.log("got in");
+		next()
+	}
 };

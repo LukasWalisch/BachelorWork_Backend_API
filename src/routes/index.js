@@ -11,8 +11,7 @@ import Bluebird from 'bluebird';
 
 let router = express.Router();
 
-//database connection
-mongoose.connect('mongodb://localhost:27017');
+
 
 router.route('/tactic')
 	.get((req, res) => {
@@ -399,26 +398,6 @@ router.delete('/mapping/:mapping_id', checkExistingMapping, (req,res)=>{
 		.catch((reject)=>{
 			res.status(500).send(reject);
 		})
-	/*
-		mongoose.Promise = Bluebird;
-		let mappingId = req.params.mapping_id;
-		let mappingIdForPull = mongoose.Types.ObjectId(mappingId);
-		let mappingPromise = findMappingByIdQuery(mappingId).exec();
-		mappingPromise.then((doc)=> {
-			var promise = [];
-			promise.push(Tactic.findByIdAndUpdate(doc.tacticId, {$pull: {mappingIds: mappingIdForPull}}).exec());
-			promise.push(Pattern.findByIdAndUpdate(doc.patternId, {$pull: {mappingIds: mappingIdForPull}}).exec());
-			Bluebird.all(promise).then(function () {
-				let deleteQuery = findMappingByIdQuery(mappingId).remove((err)=> {
-					if (err) res.status(500).send(err)
-					else res.status(200).send();
-				})
-			}).catch(e=> {
-				res.status(500).send(e);
-			});
-		}).catch(e=> {
-			res.status(500).send(e);
-		})*/
 });
 
 
