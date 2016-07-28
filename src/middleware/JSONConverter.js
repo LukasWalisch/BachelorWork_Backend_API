@@ -2,9 +2,11 @@
 const JSONConverter = {
 	convertJSONObject: function(type, argument){
 		return JSON.stringify({
-			type: type,
-			id: argument._id,
-			arguments: argument
+			data: {
+				type: type,
+				id: argument._id,
+				arguments: argument
+			}
 		})
 	},
 	convertJSONArray: function(type,argument){
@@ -17,7 +19,7 @@ const JSONConverter = {
 			}
 			finishedArray.push(jsonEntry);
 		});
-		return JSON.stringify(finishedArray);
+		return JSON.stringify({data : finishedArray});
 	}
 }
 
