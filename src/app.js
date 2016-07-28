@@ -8,6 +8,8 @@ import index from './routes/index';
 import anonym from './routes/anonymosRoutes';
 import registred from './routes/registeredRoutes';
 import mongoose from 'mongoose';
+import validator from './middleware/validateRequest';
+import admin from './routes/adminRoutes';
 
 let expressVar = express();
 //database connection
@@ -25,7 +27,7 @@ expressVar.all('/*', function(req,res,next){
 	next();
 });
 
-expressVar.all('/user/*',[require('./middleware/validateRequest')]);
+expressVar.all('/user/*',validator);
 
 expressVar.use(logger('dev'));
 expressVar.use(bodyParser.json());
@@ -33,8 +35,19 @@ expressVar.use(bodyParser.urlencoded({extended: true}));
 expressVar.use(cookieParser());
 expressVar.use(express.static('../public'));
 
-expressVar.use('/user', index); //Switch the name of the path if needed
+//TODO Delete /test after index is deleted.
+expressVar.use('/test',index);
+
+
+//=== All Routes used by the RestAPI ===//
+
+//Routes for anonym Users. No Validation/Authorization needed
 expressVar.use('/',anonym);
+//Routes for registered Users. Token and Validation is required
+expressVar.use('/user', registred);
+//Routes for administrators. Token, Validation and Authorization is required.
+expressVar.use('/user/admin',admin);
+
 
 expressVar.use(function(req,res,next){
 	var err = new Error('Ressource was not found');
@@ -44,7 +57,7 @@ expressVar.use(function(req,res,next){
 
 expressVar.use(function(err, req, res, next){
 	console.error(err.stack);
-	res.status(err.status).send(err.stack);
+	res.status(500).send(err.stack);
 })
 
 export default expressVar

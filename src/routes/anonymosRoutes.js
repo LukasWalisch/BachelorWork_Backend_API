@@ -2,12 +2,11 @@ import jwt from 'jwt-simple';
 import Tactic from '../model/tactic'
 import Pattern from '../model/pattern'
 import express from 'express'
-import mongoose from 'mongoose'
+import 'mongoose';
 import Mapping from '../model/mapping';
 import 'babel-polyfill';
-import async from 'async';
-import Bluebird from 'bluebird';
 import JSONConverter from '../middleware/JSONConverter';
+import secret from '../config/secret';
 
 let router = express.Router();
 
@@ -19,7 +18,7 @@ function genToken(user){
 	var expires = expiresIn(7);
 	var token = jwt.encode({
 		exp : expires
-	}, require('../config/secret.js')());
+	}, secret());
 
 	return {
 		token: token,
@@ -78,17 +77,9 @@ router.get("/patterns",(req,res)=>{
 			res.send(err);
 		else
 			//console.log({}.toString.call(queryResult).split(' ')[1].slice(0, -1).toLowerCase());
-			res.json(queryResult);
+			res.json(JSONConverter.convertJSONArray("pattern",queryResult));
 	});
 });
-
-
-
-
-
-
-
-
 
 
 //GET Method to retrieve a single Pattern by Id.
@@ -97,7 +88,7 @@ router.get("/patterns/:pattern_id",(req,res)=>{
 		if (err)
 			res.send(err);
 		else
-			res.json(queryResult);
+			res.json(JSONConverter.convertJSONArray("pattern",queryResult));
 	});
 });
 
