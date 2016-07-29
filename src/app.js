@@ -27,7 +27,8 @@ expressVar.all('/*', function(req,res,next){
 	next();
 });
 
-expressVar.all('/user/*',validator);
+//TODO Uncomment to activate the validation
+//expressVar.all('/user/*',validator);
 
 expressVar.use(logger('dev'));
 expressVar.use(bodyParser.json());

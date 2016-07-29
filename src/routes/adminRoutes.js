@@ -57,7 +57,6 @@ router.delete('/patterns',helper.checkExistingPattern,(req,res)=>{
 		})
 		//Delete the Pattern itself.
 	}).then(()=>{
-		console.log("Delete this shit");
 		Pattern.findById(patternObjectId.toString()).remove((err)=>{
 			if(err) res.send(err);
 			else res.json({"ok":"ok"});
