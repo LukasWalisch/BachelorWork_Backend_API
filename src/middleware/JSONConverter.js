@@ -7,7 +7,7 @@ Method returns an error if fields are not set correctly
 "use strict";
 const JSONConverter = {
 	convertJSONObject: function(type, attribute){
-		if(type == undefined || attribute == undefined) return {error: "type or attribute of Converter not set"};
+		if(type == undefined || attribute == undefined) return {error: "type or attribute of JSONConverter not set"};
 		return {
 			data: {
 				type: type,
@@ -17,7 +17,7 @@ const JSONConverter = {
 		}
 	},
 	convertJSONArray: function(type,attribute){
-		if(type == undefined || attribute == undefined) return {error: "type or attribute of Converter not set"};
+		if(type == undefined || attribute == undefined) return {error: "type or attribute of JSONConverter not set"};
 		let dataArray = [];
 		attribute.forEach((item)=>{
 			let dataArrayEntry = {

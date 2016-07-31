@@ -101,7 +101,7 @@ router.get("/tactics",(req,res)=>{
 		if (err)
 			res.send(err);
 		else
-			res.json(JSONConverter.convertJSONArray(queryResult));
+			res.json(JSONConverter.convertJSONArray("tactics",queryResult));
 	});
 });
 
