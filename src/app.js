@@ -15,9 +15,10 @@ let expressVar = express();
 //database connection
 mongoose.connect('mongodb://localhost:27017');
 
+/**
 expressVar.set('views', path.join(__dirname,'views'));
 expressVar.set('view engine','jade');
-
+*/
 
 
 expressVar.all('/*', function(req,res,next){
@@ -44,8 +45,10 @@ expressVar.use('/test',index);
 
 //Routes for anonym Users. No Validation/Authorization needed
 expressVar.use('/',anonym);
+
 //Routes for registered Users. Token and Validation is required
 expressVar.use('/user', registred);
+
 //Routes for administrators. Token, Validation and Authorization is required.
 expressVar.use('/user/admin',admin);
 
