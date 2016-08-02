@@ -112,7 +112,7 @@ router.get("/tactics/:tactic_id",(req,res)=>{
 		if (err)
 			res.send(err);
 		else
-			res.json("tactic", JSONConverter.convertJSONObject(queryResult));
+			res.json("tactic", JSONConverter.convertJSONObject("tactic",queryResult));
 	});
 });
 
