@@ -4,9 +4,10 @@
 import mongoose from 'mongoose';
 
 const mappingSchema = new mongoose.Schema({
-    patternId: String,
-    tacticId: String,
+    patternId: {type: String, required: true},
+    tacticId: {type: String, required: true},
 	info: String
 });
+
 
 export default mongoose.model('Mapping', mappingSchema);

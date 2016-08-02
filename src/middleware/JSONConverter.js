@@ -8,26 +8,25 @@ Method returns an error if fields are not set correctly
 const JSONConverter = {
 	convertJSONObject: function(type, attribute){
 		if(type == undefined || attribute == undefined) return {error: "type or attribute of JSONConverter not set"};
-		return {
-			data: {
-				type: type,
-				id: attribute._id,
-				attributes: attribute
-			}
-		}
+
+		let stringJSON = JSON.stringify(attribute);
+		stringJSON = stringJSON.replace(/_id/g,'id');
+
+
+		let returnObject = {};
+		returnObject[type] = JSON.parse(stringJSON);
+		return returnObject;
 	},
 	convertJSONArray: function(type,attribute){
 		if(type == undefined || attribute == undefined) return {error: "type or attribute of JSONConverter not set"};
 		let dataArray = [];
 		attribute.forEach((item)=>{
-			let dataArrayEntry = {
-				type : type,
-				id : item._id,
-				attributes : item
-			}
-			dataArray.push(dataArrayEntry);
+			let stringJSON = JSON.stringify(item);
+			stringJSON = stringJSON.replace(/_id/g,'id');
+
+			dataArray.push(JSON.parse(stringJSON));
 		});
-		return {data : dataArray};
+		return {[type] : dataArray};
 	}
 }
 

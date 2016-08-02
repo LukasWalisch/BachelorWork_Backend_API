@@ -12,14 +12,16 @@ let router = express.Router();
 
 //========== LOGIN ==========//
 //Sends back a Token for a registered User so he can access the Methods in registeredRoutes.
-//Needs to helper functions genToken and expiresIn to operate
+//Needs to helper functions genToken and expiresIn to operate.
 
 function genToken(user){
-	var expires = expiresIn(7);
+	var expires = expiresIn(7); //Sets the expirationtime to seven Days (time not final)
+	//Token is generated through jwt. Its saves the expiration time and hashes it with a secret which is capsuled from the method.
 	var token = jwt.encode({
 		exp : expires
 	}, secret());
 
+	//Returns the token, the expired time and the user who generated it.
 	return {
 		token: token,
 		expires: expires,

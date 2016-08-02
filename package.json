@@ -5,6 +5,7 @@
   "main": "dist/index.js",
   "dependencies": {
     "async": "^2.0.0",
+    "bcrypt-nodejs" : "^0.0.3",
     "babel-polyfill": "^6.9.1",
     "bluebird": "^3.4.1",
     "body-parser": "~1.15.1",
