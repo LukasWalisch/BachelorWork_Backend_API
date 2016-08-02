@@ -90,7 +90,7 @@ router.get("/patterns/:pattern_id",(req,res)=>{
 		if (err)
 			res.send(err);
 		else
-			res.json(JSONConverter.convertJSONArray("pattern",queryResult));
+			res.json(JSONConverter.convertJSONObject("pattern",queryResult));
 	});
 });
 
@@ -112,7 +112,7 @@ router.get("/tactics/:tactic_id",(req,res)=>{
 		if (err)
 			res.send(err);
 		else
-			res.json(queryResult);
+			res.json("tactic", JSONConverter.convertJSONObject(queryResult));
 	});
 });
 
