@@ -1,11 +1,18 @@
 import jwt from 'jwt-simple';
 import secret from '../config/secret';
+import User from '../model/user';
+import Bluebird from 'bluebird';
+import mongoose from 'mongoose';
 
 //TODO Should be a get User function
 function validateUser(username){
-	if (username == "admin") return "admin";
-	if (username == "user") return "user";
-	return undefined;
+
+	return new Bluebird((resolve)=>{
+		let promise = User.findOne({'username' : username}).exec();
+		promise.then((user)=>{
+			resolve(user);
+		})
+	})
 }
 
 
@@ -17,7 +24,7 @@ export default function(req,res,next){
 	let key = (req.body && req.body.x_key) || (req.query && req.query.x_key) || req.headers['x-key'];
 
 	//If both variables are set
-	if(token || key){
+	if(token && key){
 		try {
 			let decoded = jwt.decode(token, secret());
 			if (decoded.exp <= Date.now()) {
@@ -32,38 +39,40 @@ export default function(req,res,next){
 
 			//Authorize User
 
-			let user = validateUser(key);
-			if (user) {
-				//If there is an "admin" in the url, check if the user is an admin to authorized
-				//If there is an /user in the url, check if the user exists
-				if ((req.url.indexOf('admin') >= 0 && user == 'admin') || (req.url.indexOf('admin') < 0 && req.url.indexOf('/user/') >= 0)) {
-					next()
+			let userPromise = validateUser(key);
+			userPromise.then((user)=> {
+				if (user) {
+					//If there is an "admin" in the url, check if the user is an admin to authorized
+					//If there is an /user in the url, check if the user exists
+					if ((req.url.indexOf('admin') >= 0 && user.role == 'admin') || (req.url.indexOf('admin') < 0 && req.url.indexOf('/user/') >= 0)) {
+						next()
+					} else {
+						//User is not an admin
+						res.status(403);
+						res.json({
+							"status": 403,
+							"message": "Not authorized!"
+						});
+						return;
+					}
 				} else {
-					//User is not an admin
-					res.status(403);
+					//No user with this name exists
+					res.status(401);
 					res.json({
-						"status": 403,
-						"message": "Not authorized!"
+						"status": 401,
+						"message": "Invalid User"
 					});
 					return;
 				}
-			} else {
-				//No user with this name exists
-				res.status(401);
-				res.json({
-					"status": 401,
-					"message": "Invalid User"
-				});
-				return;
-			}
-		}catch (err){
-			res.status(500);
-			res.json({
-				"status": 500,
-				"message": "Something went wrong",
-				"error": err
 			});
-		}
+			}catch (err){
+				res.status(500);
+				res.json({
+					"status": 500,
+					"message": "Something went wrong",
+					"error": err
+				});
+			}
 	}else {
 		res.status(401);
 		res.json({

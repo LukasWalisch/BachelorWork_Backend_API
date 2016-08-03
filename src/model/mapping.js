@@ -6,7 +6,8 @@ import mongoose from 'mongoose';
 const mappingSchema = new mongoose.Schema({
     patternId: {type: String, required: true},
     tacticId: {type: String, required: true},
-	info: String
+	info: String,
+	commentId : Array
 });
 
 
