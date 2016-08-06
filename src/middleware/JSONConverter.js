@@ -29,8 +29,8 @@ const JSONConverter = {
 		return {[type] : dataArray};
 	},
 	//Wrapps an error message to a RESTAdapter friendly Javascript Object. User res.json(JSONConverter.convertJSONError(msg)) to send an error back.
-	convertJSONError: function(message){
-		return {errors : {msg : message}};
+	convertJSONError: function(message,status = 500){
+		return {errors : {msg : message, status : status}};
 	}
 }
 

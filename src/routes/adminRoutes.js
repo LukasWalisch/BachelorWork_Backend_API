@@ -8,6 +8,7 @@ import async from 'async';
 import Bluebird from 'bluebird';
 import JSONConverter from '../middleware/JSONConverter';
 import helper from '../middleware/helper';
+import User from '../model/user';
 
 let router = express.Router();
 
@@ -66,14 +67,37 @@ router.delete('/patterns',helper.checkExistingPattern,(req,res)=>{
 
 //========== Tactics ==========//
 
-router.delete('/tactic',helper.checkExistingTactic,(req,res)=>{
+router.delete('/tactics',helper.checkExistingTactic,(req,res)=>{
 	//TODO Implement Method
 })
 
 //========== Mappings ==========//
 
-router.delete('/mapping',helper.checkExistingMapping,(req,res)=>{
+router.delete('/mappings',helper.checkExistingMapping,(req,res)=>{
 	//TODO Copy from index.js and adjust for ember.js
+})
+
+//========= User =========//
+
+router.get('/users', (req,res)=>{
+	User.find((err, queryResult) => {
+		if (err)
+			res.json(JSONConverter.convertJSONError(err));
+		else
+			res.json(JSONConverter.convertJSONArray("users",queryResult));
+	});
+})
+
+router.get('/users/:user_id',(req,res)=>{
+	let userId = req.params.user_id || req.body.user_id || '';
+	User.findById(userId,(err,result)=>{
+		//If error occurs, send back the error.
+		if (err) res.json(JSONConverter.convertJSONError(err));
+		//If no User with Id is found, return User not found error.
+		else if (!result) res.json(JSONConverter.convertJSONError("User not found",404));
+		else res.json(JSONConverter.convertJSONObject("user",result));
+
+	})
 })
 
 

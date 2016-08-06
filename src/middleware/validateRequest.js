@@ -5,12 +5,13 @@ import Bluebird from 'bluebird';
 import mongoose from 'mongoose';
 
 //TODO Should be a get User function
-function validateUser(username){
+function validateUser(username,token){
 
 	return new Bluebird((resolve)=>{
 		let promise = User.findOne({'username' : username}).exec();
 		promise.then((user)=>{
-			resolve(user);
+			if(user.token.token === token) resolve(user);
+			else resolve(null);
 		})
 	})
 }
@@ -39,7 +40,7 @@ export default function(req,res,next){
 
 			//Authorize User
 
-			let userPromise = validateUser(key);
+			let userPromise = validateUser(key,token);
 			userPromise.then((user)=> {
 				if (user) {
 					//If there is an "admin" in the url, check if the user is an admin to authorized

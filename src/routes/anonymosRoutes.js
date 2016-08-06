@@ -17,7 +17,7 @@ let router = express.Router();
 //Needs to helper functions genToken and expiresIn to operate.
 
 function genToken(){
-	var expires = expiresIn(7); //Sets the expirationtime to seven Days (time not final)
+	var expires = expiresIn(1); //Sets the expirationtime to seven Days (time not final)
 	//Token is generated through jwt. Its saves the expiration time and hashes it with a secret which is capsuled from the method.
 	var token = jwt.encode({
 		exp : expires
@@ -37,6 +37,7 @@ function expiresIn(numDays){
 	return dateObj.setDate(dateObj.getDate() + numDays);
 }
 //Uncomment if you need a new admin for testing.
+/*
 router.post("/makeAdmin",(req,res)=>{
 	var newUser = new User();
 	newUser.username = "admin";
@@ -47,6 +48,7 @@ router.post("/makeAdmin",(req,res)=>{
 		res.json(result);
 	})
 })
+*/
 
 
 router.post("/login",(req,res)=> {
@@ -75,7 +77,6 @@ router.post("/login",(req,res)=> {
 		}
 		//Validate the password if its the right password, send exactly the same Errormessage as above if Password doesnt check.
 		user.validatePassword(password,(err, isMatch)=>{
-			console.log("isMatch: " + isMatch);
 			if(err) res.json(JSONConverter.convertJSONError(err));
 			else if(isMatch){
 				//Build the User that should be return only with neccasary Props.
@@ -106,13 +107,27 @@ router.post("/login",(req,res)=> {
 
 //GET Method to retrieve all patterns that are saved to the db.
 router.get("/patterns",(req,res)=>{
-	Pattern.find((err, queryResult) => {
-		if (err)
-			res.json(JSONConverter.convertJSONError(err));
-		else
+
+	const queryParams = req.query;
+	if (Object.keys(queryParams).length === 0) {
+
+		Pattern.find((err, queryResult) => {
+			if (err)
+				res.json(JSONConverter.convertJSONError(err));
+			else
 			//console.log({}.toString.call(queryResult).split(' ')[1].slice(0, -1).toLowerCase());
-			res.json(JSONConverter.convertJSONArray("pattern",queryResult));
-	});
+				res.json(JSONConverter.convertJSONArray("pattern", queryResult));
+		});
+	}
+
+	else if ("patternId" in queryParams){
+		//Get all related Patterns and send it back to the caller.
+		getRelatedPattern(queryParams,res);
+	}
+
+	else{
+		res.json(JSONConverter.convertJSONError("Query not avaiable", 404));
+	}
 });
 
 
@@ -171,6 +186,11 @@ router.get("/mappings", (req, res) => {
 		getMappingsByPatternId(queryParams, req, res);
 	}
 
+	//Query: getMappingsByTacticId
+	else if('tacticId' in queryParams){
+		getMappingsByTacticId(queryParams,res);
+	}
+
 	// if query params dont match, send back an error msg
 	else {
 		res.json(JSONConverter.convertJSONError("query not avaiable"));
@@ -187,18 +207,78 @@ router.get("/mappings/:mapping_id",(req,res)=>{
 	});
 });
 
+
+// ========== Users =========== //
+//Get and Post für Users here
+
+router.post("/users",(req,res)=>{
+		//TODO Change to the right req Params
+		let username = "hardCodeUsername";
+		let password = "hardCodePassword";
+
+		let user = new User();
+		user.username = username;
+		user.password = password;
+		user.role = "user";
+
+		user.save((err,result)=>{
+			if (err){
+				res.json(JSONConverter.convertJSONError(err))
+			}
+			res.json({
+				"status" : 200,
+				"message" : "user created"
+			})
+		})
+
+	});
+
 //query functions
 
 function getMappingsByPatternId (queryParams, req, res) {
 	//query for mappings with patternId
 	Mapping.find({patternId: queryParams.patternId}, (err, result) => {
-		if (err){
-			res.send(err);
-		}
-		else {
-			res.json(JSONConverter.convertJSONArray('mappings',result));
-		}
+
+		//If an error occurs, send back the error
+		if (err) res.json(JSONConverter.convertJSONError(err));
+
+		//If Mappings are found, then send back the mappings.
+		else res.json(JSONConverter.convertJSONArray('mappings',result));
 	});
+}
+
+function getMappingsByTacticId(queryParams,res){
+	Mapping.find({tacticId: queryParams.tacticId}, (err,result)=>{
+
+		//If an error occurs, send back the error
+		if(err) res.json(JSONConverter.convertJSONError(err));
+
+		//If Mappings are found, then send back the mappings.
+		else res.json(JSONConverter.convertJSONArray('mappings',result));
+	})
+}
+
+function getRelatedPattern(queryParams,res){
+	Pattern.findOne({_id : queryParams.patternId}, (err,result)=>{
+
+		//If an error occurs, send back the error
+		if (err) res.json(JSONConverter.convertJSONError(err));
+
+		//If the pattern doesn´t exist, send back 404 - Pattern not found error
+		else if (!result) res.json(JSONConverter.convertJSONError("Pattern not found",404));
+
+		//If pattern is found, start a new query and get all Patterns from the relatedPatternIds Array aka idArray.
+		else{
+			let idArray = result.relatedPatternIds;
+			Pattern.find({
+				_id : {$in : idArray}
+			//Callback after Query is finished:
+			},(err,result)=>{
+				if (err) res.json(JSONConverter.convertJSONError(err));
+				else res.json(JSONConverter.convertJSONArray("patterns",result));
+			})
+		}
+	})
 }
 
 
