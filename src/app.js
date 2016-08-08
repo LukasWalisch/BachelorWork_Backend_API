@@ -10,6 +10,7 @@ import registred from './routes/registeredRoutes';
 import mongoose from 'mongoose';
 import validator from './middleware/validateRequest';
 import admin from './routes/adminRoutes';
+import JSONConverter from './middleware/JSONConverter';
 
 let expressVar = express();
 //database connection
@@ -56,12 +57,14 @@ expressVar.use('/user/admin',admin);
 expressVar.use(function(req,res,next){
 	var err = new Error('Ressource was not found');
 	err.status = 404;
+	console.log(err);
 	next(err);
 })
 
 expressVar.use(function(err, req, res, next){
-	console.error(err.stack);
-	res.status(500).send(err.stack);
+	console.log("ErrorMessage: " + err);
+	if(err) res.json(JSONConverter.convertJSONError(err.message,err.status)); //TODO Better Error Handling.
+	else res.json(JSONConverter.convertJSONError("Ressource not found",404));
 })
 
 export default expressVar

@@ -5,7 +5,7 @@
 import mongoose from 'mongoose'
 
 const patternSchema = new mongoose.Schema({
-    name: String,
+    name: {type : String, required : true, index:{unique: true}},
     info: String,
     mappingIds: Array,
     relatedPatternIds: Array

@@ -6,6 +6,7 @@ import express from 'express'
 import mongoose from 'mongoose'
 import 'babel-polyfill';
 import Bluebird from 'bluebird';
+import JSONConverter from '../middleware/JSONConverter';
 
 export default{
 	//Allows to check for an existing Pattern. If Pattern is not found the process is canceled and an errormessage is send.
@@ -14,10 +15,10 @@ export default{
 		if (patternId === undefined) patternId = req.params.pattern_id;
 		Pattern.count({_id: patternId}, (err,count)=>{
 			if(err){
-				res.status(500).send(err);
+				res.json(JSONConverter.convertJSONError(err))
 			}else
 			if(count <= 0){
-				res.json({error:"Error, Pattern not found"});
+				res.json(JSONConverter.convertJSONError("Pattern not found",404));
 			}else {
 				next();
 			}
@@ -29,10 +30,10 @@ export default{
 		if (tacticId === undefined) tacticId = req.params.tactic_id;
 		Tactic.count({_id: tacticId}, (err,count)=>{
 			if(err){
-				res.status(500).send(err);
+				res.json(JSONConverter.convertJSONError(err))
 			}else
 			if(count <= 0){
-				res.json({error:"Error, Tactic not found"});
+				res.json(JSONConverter.convertJSONError("Tactic not found",404));
 			}else {
 				next();
 			}

@@ -14,7 +14,7 @@ app.set('port', port);
 app.listen(port);
 
 
-console.log("server running");
+console.log("server running on " + port);
 
 
 export default app;
